@@ -6,103 +6,10 @@
     <title>نظام إدارة فواتير المبيعات</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
-        /* Login Styles */
-        .login-container {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 9999;
-        }
-        
-        .login-box {
-            background: rgba(255, 255, 255, 0.95);
-            padding: 40px;
-            border-radius: 15px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-            text-align: center;
-            min-width: 400px;
-            backdrop-filter: blur(10px);
-        }
-        
-        .login-header h1 {
-            color: #333;
-            margin-bottom: 10px;
-            font-size: 2rem;
-        }
-        
-        .login-header p {
-            color: #666;
-            margin-bottom: 30px;
-        }
-        
-        .password-input {
-            width: 100%;
-            padding: 15px 20px;
-            border: 2px solid #ddd;
-            border-radius: 25px;
-            font-size: 16px;
-            outline: none;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-            text-align: center;
-            letter-spacing: 2px;
-        }
-        
-        .password-input:focus {
-            border-color: #4CAF50;
-            box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);
-        }
-        
-        .login-btn {
-            background: linear-gradient(135deg, #4CAF50, #45a049);
-            color: white;
-            border: none;
-            padding: 15px 40px;
-            border-radius: 25px;
-            font-size: 16px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-            width: 100%;
-        }
-        
-        .login-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
-        }
-        
-        .login-error {
-            color: #dc3545;
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            padding: 10px;
-            border-radius: 8px;
-            margin-top: 15px;
-            font-weight: bold;
-        }
-        
-        .logout-btn {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-        }
-        
-        .logout-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
         }
         
         body {
@@ -477,35 +384,13 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
-        
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
-            20%, 40%, 60%, 80% { transform: translateX(10px); }
-        }
     </style>
 </head>
 <body>
-    <!-- Login Screen -->
-    <div class="login-container" id="loginContainer">
-        <div class="login-box">
-            <div class="login-header">
-                <h1>🔐 دخول محمي</h1>
-                <p>يرجى إدخال كلمة المرور للوصول إلى النظام</p>
-            </div>
-            <div class="login-form">
-                <input type="password" id="passwordInput" placeholder="كلمة المرور..." class="password-input" />
-                <button onclick="checkPassword()" class="login-btn">دخول</button>
-                <div id="loginError" class="login-error hidden"></div>
-            </div>
-        </div>
-    </div>
-
-    <div class="container hidden" id="mainContainer">
+    <div class="container">
         <div class="header">
             <h1>نظام إدارة فواتير المبيعات</h1>
             <p>رفع وتحليل بيانات الفواتير مع إمكانية الطباعة الحرارية</p>
-            <button onclick="logout()" class="logout-btn">تسجيل خروج</button>
         </div>
         
         <div class="upload-section">
@@ -572,8 +457,6 @@
         
         // Auto load Excel file if exists
         async function autoLoadExcelFile() {
-            if (!validateAuth()) return;
-            
             try {
                 const response = await fetch('InvoiceItem.xlsx');
                 if (response.ok) {
@@ -592,141 +475,30 @@
             }
         }
         
-        function handleFile(file) {
-            if (!validateAuth()) return;
-            
-            if (!file.name.match(/\.(xlsx|xls)$/)) {
-                showMessage('يرجى رفع ملف Excel صالح (.xlsx أو .xls)', 'error');
-                return;
-            }
-            
-            showMessage('جاري تحميل الملف...', 'info');
-            
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = new Uint8Array(e.target.result);
-                    const workbook = XLSX.read(data, { type: 'array' });
-                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
-                    
-                    processExcelData(jsonData);
-                } catch (error) {
-                    showMessage('خطأ في قراءة ملف Excel: ' + error.message, 'error');
-                }
-            };
-            reader.readAsArrayBuffer(file);
-        }
-        
-        function searchCustomer() {
-            if (!validateAuth()) return;
-            
-            const customerName = document.getElementById('customerSearch').value.trim();
-            
-            if (!customerName) {
-                showMessage('يرجى إدخال اسم العميل للبحث', 'error');
-                return;
-            }
-            
-            filteredData = excelData.filter(item => 
-                item.customerName.toLowerCase().includes(customerName.toLowerCase())
-            );
-            
-            if (filteredData.length === 0) {
-                showMessage('لم يتم العثور على نتائج للعميل المحدد', 'error');
-                document.getElementById('invoicesSection').classList.add('hidden');
-                return;
-            }
-            
-            displayInvoices();
-        }
-        
-        function generateReport() {
-            if (!validateAuth()) return;
-            
-            if (selectedInvoices.size === 0) {
-                showMessage('يرجى اختيار فاتورة واحدة على الأقل', 'error');
-                return;
-            }
-            
-            const selectedData = [];
-            const invoices = new Map();
-            
-            // Group data by invoice
-            filteredData.forEach(item => {
-                const key = `${item.invoiceNumber}-${item.invoiceDate}`;
-                if (selectedInvoices.has(key)) {
-                    selectedData.push(item);
-                    if (!invoices.has(key)) {
-                        invoices.set(key, {
-                            number: item.invoiceNumber,
-                            date: item.invoiceDate,
-                            customer: item.customerName
-                        });
-                    }
-                }
-            });
-            
-            displayDataTable(selectedData);
-            document.getElementById('resultsSection').classList.remove('hidden');
-        }
-        
-        function generateThermalReport() {
-            if (!validateAuth()) return;
-            
-            if (selectedInvoices.size === 0) {
-                showMessage('يرجى اختيار فاتورة واحدة على الأقل', 'error');
-                return;
-            }
-            
-            const selectedData = [];
-            filteredData.forEach(item => {
-                const key = `${item.invoiceNumber}-${item.invoiceDate}`;
-                if (selectedInvoices.has(key)) {
-                    selectedData.push(item);
-                }
-            });
-            
-            // Group by item name and aggregate quantities
-            const itemGroups = new Map();
-            
-            selectedData.forEach(item => {
-                if (!itemGroups.has(item.itemName)) {
-                    itemGroups.set(item.itemName, {
-                        itemName: item.itemName,
-                        totalQuantity: 0,
-                        netQuantity: 0,
-                        invoices: []
-                    });
-                }
-                
-                const group = itemGroups.get(item.itemName);
-                const netQty = item.quantity - item.returnQuantity;
-                
-                group.totalQuantity += item.quantity;
-                group.netQuantity += netQty;
-                group.invoices.push({
-                    invoiceNumber: item.invoiceNumber,
-                    invoiceDate: item.invoiceDate,
-                    quantity: item.quantity,
-                    returnQuantity: item.returnQuantity,
-                    netQuantity: netQty
-                });
-            });
-            
-            generateThermalHTML(itemGroups);
-            document.getElementById('thermalReport').classList.remove('hidden');
-        }
-        
-        // File upload handling
-        const fileInput = document.getElementById('fileInput');
-        const fileUploadContainer = document.querySelector('.file-upload-container');
-        
         // File upload handling
         const fileInput = document.getElementById('fileInput');
         const fileUploadContainer = document.querySelector('.file-upload-container');
         
         fileInput.addEventListener('change', handleFileUpload);
+        
+        // Drag and drop functionality
+        fileUploadContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileUploadContainer.classList.add('dragover');
+        });
+        
+        fileUploadContainer.addEventListener('dragleave', () => {
+            fileUploadContainer.classList.remove('dragover');
+        });
+        
+        fileUploadContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileUploadContainer.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
         
         function handleFileUpload(event) {
             const file = event.target.files[0];
