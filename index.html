@@ -1,0 +1,1073 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة فواتير المبيعات</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        /* Login Styles */
+        .login-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+        }
+        
+        .login-box {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            text-align: center;
+            min-width: 400px;
+            backdrop-filter: blur(10px);
+        }
+        
+        .login-header h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
+        
+        .login-header p {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        
+        .password-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+            text-align: center;
+            letter-spacing: 2px;
+        }
+        
+        .password-input:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);
+        }
+        
+        .login-btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+            width: 100%;
+        }
+        
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+        
+        .login-error {
+            color: #dc3545;
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        
+        .logout-btn {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .upload-section {
+            padding: 30px;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .file-upload-container {
+            background: #f8f9fa;
+            border: 3px dashed #4CAF50;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .file-upload-container:hover {
+            background: #e8f5e8;
+            transform: translateY(-2px);
+        }
+        
+        .file-upload-container.dragover {
+            background: #d4edda;
+            border-color: #28a745;
+        }
+        
+        #fileInput {
+            display: none;
+        }
+        
+        .upload-icon {
+            font-size: 48px;
+            color: #4CAF50;
+            margin-bottom: 20px;
+        }
+        
+        .upload-text {
+            font-size: 18px;
+            color: #666;
+            margin-bottom: 20px;
+        }
+        
+        .upload-btn {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 25px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+        
+        .upload-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+        
+        .controls-section {
+            padding: 30px;
+            background: #fafafa;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
+        .search-container {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .search-input {
+            flex: 1;
+            min-width: 250px;
+            padding: 12px 20px;
+            border: 2px solid #ddd;
+            border-radius: 25px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);
+        }
+        
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 25px;
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #28a745, #1e7e34);
+            color: white;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+        
+        .btn-warning {
+            background: linear-gradient(135deg, #ffc107, #e0a800);
+            color: #212529;
+            box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+        }
+        
+        .invoices-section {
+            padding: 30px;
+        }
+        
+        .invoice-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .invoice-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .invoice-item:hover {
+            border-color: #4CAF50;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .invoice-item.selected {
+            border-color: #4CAF50;
+            background: #e8f5e8;
+        }
+        
+        .invoice-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .invoice-number {
+            font-weight: bold;
+            color: #4CAF50;
+            font-size: 18px;
+        }
+        
+        .invoice-date {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .customer-name {
+            color: #333;
+            margin-top: 5px;
+            font-size: 14px;
+        }
+        
+        .results-section {
+            padding: 30px;
+            background: white;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .data-table th {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .data-table td {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            text-align: center;
+        }
+        
+        .data-table tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .thermal-report {
+            width: 58mm;
+            margin: 20px auto;
+            background: white;
+            padding: 5mm;
+            border: 1px solid #ddd;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.2;
+        }
+        
+        .thermal-header {
+            text-align: center;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+        
+        .thermal-item {
+            margin-bottom: 8px;
+            padding-bottom: 5px;
+            border-bottom: 1px dashed #ccc;
+        }
+        
+        .thermal-item:last-child {
+            border-bottom: none;
+        }
+        
+        .item-name {
+            font-weight: bold;
+            margin-bottom: 2px;
+        }
+        
+        .item-total {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+        
+        .invoice-detail {
+            font-size: 10px;
+            color: #888;
+            margin-left: 10px;
+            padding-left: 5px;
+            border-left: 1px solid #ddd;
+        }
+        
+        .invoice-details {
+            background: #f8f9fa;
+            padding: 8px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 300px;
+        }
+        
+        .invoice-detail-item {
+            margin-bottom: 3px;
+            padding: 2px 0;
+            border-bottom: 1px dotted #ccc;
+        }
+        
+        .invoice-detail-item:last-child {
+            border-bottom: none;
+        }
+        
+        .total-line {
+            border-top: 2px solid #333;
+            padding-top: 5px;
+            margin-top: 10px;
+            font-weight: bold;
+            text-align: center;
+        }
+        
+        .status-message {
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+        
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        
+        .hidden {
+            display: none;
+        }
+        
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            
+            .thermal-report, .thermal-report * {
+                visibility: visible;
+            }
+            
+            .thermal-report {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 58mm;
+                margin: 0;
+                border: none;
+            }
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #4CAF50;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+            20%, 40%, 60%, 80% { transform: translateX(10px); }
+        }
+    </style>
+</head>
+<body>
+    <!-- Login Screen -->
+    <div class="login-container" id="loginContainer">
+        <div class="login-box">
+            <div class="login-header">
+                <h1>🔐 دخول محمي</h1>
+                <p>يرجى إدخال كلمة المرور للوصول إلى النظام</p>
+            </div>
+            <div class="login-form">
+                <input type="password" id="passwordInput" placeholder="كلمة المرور..." class="password-input" />
+                <button onclick="checkPassword()" class="login-btn">دخول</button>
+                <div id="loginError" class="login-error hidden"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container hidden" id="mainContainer">
+        <div class="header">
+            <h1>نظام إدارة فواتير المبيعات</h1>
+            <p>رفع وتحليل بيانات الفواتير مع إمكانية الطباعة الحرارية</p>
+            <button onclick="logout()" class="logout-btn">تسجيل خروج</button>
+        </div>
+        
+        <div class="upload-section">
+            <div class="file-upload-container" onclick="document.getElementById('fileInput').click()">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">اسحب ملف Excel هنا أو انقر للرفع</div>
+                <button class="upload-btn">اختر ملف Excel</button>
+                <input type="file" id="fileInput" accept=".xlsx,.xls" />
+            </div>
+        </div>
+        
+        <div class="controls-section hidden" id="controlsSection">
+            <div class="search-container">
+                <input type="text" class="search-input" id="customerSearch" placeholder="البحث باسم العميل..." />
+                <button class="btn btn-primary" onclick="searchCustomer()">بحث</button>
+                <button class="btn btn-warning" onclick="clearSearch()">مسح البحث</button>
+            </div>
+        </div>
+        
+        <div class="invoices-section hidden" id="invoicesSection">
+            <h3>قائمة الفواتير</h3>
+            <div class="invoice-list" id="invoiceList"></div>
+            <div style="text-align: center; margin-top: 20px;">
+                <button class="btn btn-success" onclick="generateReport()">إنشاء التقرير</button>
+            </div>
+        </div>
+        
+        <div class="results-section hidden" id="resultsSection">
+            <h3>نتائج البحث</h3>
+            <table class="data-table" id="dataTable">
+                <thead>
+                    <tr>
+                        <th>رمز الصنف</th>
+                        <th>اسم الصنف</th>
+                        <th>إجمالي الكمية</th>
+                        <th>إجمالي المرتجعات</th>
+                        <th>الكمية الصافية</th>
+                        <th>تفاصيل الفواتير</th>
+                    </tr>
+                </thead>
+                <tbody id="dataTableBody"></tbody>
+            </table>
+            
+            <div style="text-align: center; margin: 20px 0;">
+                <button class="btn btn-success" onclick="generateThermalReport()">إنشاء تقرير طباعة حرارية</button>
+                <button class="btn btn-primary" onclick="printThermalReport()">طباعة</button>
+            </div>
+        </div>
+        
+        <div class="thermal-report hidden" id="thermalReport"></div>
+        
+        <div id="statusMessage"></div>
+    </div>
+
+    <script>
+        let excelData = [];
+        let selectedInvoices = new Set();
+        let filteredData = [];
+        
+        // Auto-load InvoiceItem.xlsx on page load
+        window.addEventListener('load', function() {
+            autoLoadExcelFile();
+        });
+        
+        // Auto load Excel file if exists
+        async function autoLoadExcelFile() {
+            if (!validateAuth()) return;
+            
+            try {
+                const response = await fetch('InvoiceItem.xlsx');
+                if (response.ok) {
+                    const arrayBuffer = await response.arrayBuffer();
+                    const data = new Uint8Array(arrayBuffer);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    
+                    processExcelData(jsonData);
+                    showMessage('تم تحميل ملف InvoiceItem.xlsx تلقائياً', 'success');
+                }
+            } catch (error) {
+                // File doesn't exist or can't be loaded, that's fine
+                console.log('InvoiceItem.xlsx not found, waiting for manual upload');
+            }
+        }
+        
+        function handleFile(file) {
+            if (!validateAuth()) return;
+            
+            if (!file.name.match(/\.(xlsx|xls)$/)) {
+                showMessage('يرجى رفع ملف Excel صالح (.xlsx أو .xls)', 'error');
+                return;
+            }
+            
+            showMessage('جاري تحميل الملف...', 'info');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    
+                    processExcelData(jsonData);
+                } catch (error) {
+                    showMessage('خطأ في قراءة ملف Excel: ' + error.message, 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function searchCustomer() {
+            if (!validateAuth()) return;
+            
+            const customerName = document.getElementById('customerSearch').value.trim();
+            
+            if (!customerName) {
+                showMessage('يرجى إدخال اسم العميل للبحث', 'error');
+                return;
+            }
+            
+            filteredData = excelData.filter(item => 
+                item.customerName.toLowerCase().includes(customerName.toLowerCase())
+            );
+            
+            if (filteredData.length === 0) {
+                showMessage('لم يتم العثور على نتائج للعميل المحدد', 'error');
+                document.getElementById('invoicesSection').classList.add('hidden');
+                return;
+            }
+            
+            displayInvoices();
+        }
+        
+        function generateReport() {
+            if (!validateAuth()) return;
+            
+            if (selectedInvoices.size === 0) {
+                showMessage('يرجى اختيار فاتورة واحدة على الأقل', 'error');
+                return;
+            }
+            
+            const selectedData = [];
+            const invoices = new Map();
+            
+            // Group data by invoice
+            filteredData.forEach(item => {
+                const key = `${item.invoiceNumber}-${item.invoiceDate}`;
+                if (selectedInvoices.has(key)) {
+                    selectedData.push(item);
+                    if (!invoices.has(key)) {
+                        invoices.set(key, {
+                            number: item.invoiceNumber,
+                            date: item.invoiceDate,
+                            customer: item.customerName
+                        });
+                    }
+                }
+            });
+            
+            displayDataTable(selectedData);
+            document.getElementById('resultsSection').classList.remove('hidden');
+        }
+        
+        function generateThermalReport() {
+            if (!validateAuth()) return;
+            
+            if (selectedInvoices.size === 0) {
+                showMessage('يرجى اختيار فاتورة واحدة على الأقل', 'error');
+                return;
+            }
+            
+            const selectedData = [];
+            filteredData.forEach(item => {
+                const key = `${item.invoiceNumber}-${item.invoiceDate}`;
+                if (selectedInvoices.has(key)) {
+                    selectedData.push(item);
+                }
+            });
+            
+            // Group by item name and aggregate quantities
+            const itemGroups = new Map();
+            
+            selectedData.forEach(item => {
+                if (!itemGroups.has(item.itemName)) {
+                    itemGroups.set(item.itemName, {
+                        itemName: item.itemName,
+                        totalQuantity: 0,
+                        netQuantity: 0,
+                        invoices: []
+                    });
+                }
+                
+                const group = itemGroups.get(item.itemName);
+                const netQty = item.quantity - item.returnQuantity;
+                
+                group.totalQuantity += item.quantity;
+                group.netQuantity += netQty;
+                group.invoices.push({
+                    invoiceNumber: item.invoiceNumber,
+                    invoiceDate: item.invoiceDate,
+                    quantity: item.quantity,
+                    returnQuantity: item.returnQuantity,
+                    netQuantity: netQty
+                });
+            });
+            
+            generateThermalHTML(itemGroups);
+            document.getElementById('thermalReport').classList.remove('hidden');
+        }
+        
+        // File upload handling
+        const fileInput = document.getElementById('fileInput');
+        const fileUploadContainer = document.querySelector('.file-upload-container');
+        
+        // File upload handling
+        const fileInput = document.getElementById('fileInput');
+        const fileUploadContainer = document.querySelector('.file-upload-container');
+        
+        fileInput.addEventListener('change', handleFileUpload);
+        
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+        
+        function handleFile(file) {
+            if (!file.name.match(/\.(xlsx|xls)$/)) {
+                showMessage('يرجى رفع ملف Excel صالح (.xlsx أو .xls)', 'error');
+                return;
+            }
+            
+            showMessage('جاري تحميل الملف...', 'info');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                    const jsonData = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+                    
+                    processExcelData(jsonData);
+                } catch (error) {
+                    showMessage('خطأ في قراءة ملف Excel: ' + error.message, 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function processExcelData(rawData) {
+            if (rawData.length < 2) {
+                showMessage('الملف فارغ أو لا يحتوي على بيانات صالحة', 'error');
+                return;
+            }
+            
+            const headers = rawData[0];
+            excelData = [];
+            
+            for (let i = 1; i < rawData.length; i++) {
+                const row = rawData[i];
+                if (row.length > 0 && row.some(cell => cell !== null && cell !== undefined && cell !== '')) {
+                    const rowData = {
+                        itemCode: row[0] || '',           // رمز الصنف
+                        itemName: row[1] || '',           // اسم الصنف
+                        customerName: row[2] || '',       // اسم العميل
+                        quantity: parseFloat(row[3]) || 0, // الكمية
+                        returnQuantity: parseFloat(row[14]) || 0, // كمية المرتجعات
+                        invoiceNumber: row[15] || '',     // رقم الفاتورة
+                        invoiceDate: row[16] || ''        // تاريخ الفاتورة
+                    };
+                    excelData.push(rowData);
+                }
+            }
+            
+            if (excelData.length === 0) {
+                showMessage('لم يتم العثور على بيانات صالحة في الملف', 'error');
+                return;
+            }
+            
+            showMessage(`تم تحميل ${excelData.length} سجل بنجاح!`, 'success');
+            document.getElementById('controlsSection').classList.remove('hidden');
+        }
+        
+        function searchCustomer() {
+            const customerName = document.getElementById('customerSearch').value.trim();
+            
+            if (!customerName) {
+                showMessage('يرجى إدخال اسم العميل للبحث', 'error');
+                return;
+            }
+            
+            filteredData = excelData.filter(item => 
+                item.customerName.toLowerCase().includes(customerName.toLowerCase())
+            );
+            
+            if (filteredData.length === 0) {
+                showMessage('لم يتم العثور على نتائج للعميل المحدد', 'error');
+                document.getElementById('invoicesSection').classList.add('hidden');
+                return;
+            }
+            
+            displayInvoices();
+        }
+        
+        function displayInvoices() {
+            const invoices = new Map();
+            
+            filteredData.forEach(item => {
+                const key = `${item.invoiceNumber}-${item.invoiceDate}`;
+                if (!invoices.has(key)) {
+                    invoices.set(key, {
+                        number: item.invoiceNumber,
+                        date: item.invoiceDate,
+                        customer: item.customerName,
+                        items: []
+                    });
+                }
+                invoices.get(key).items.push(item);
+            });
+            
+            const invoiceList = document.getElementById('invoiceList');
+            invoiceList.innerHTML = '';
+            
+            invoices.forEach((invoice, key) => {
+                const invoiceElement = document.createElement('div');
+                invoiceElement.className = 'invoice-item';
+                invoiceElement.dataset.key = key;
+                
+                invoiceElement.innerHTML = `
+                    <div class="invoice-info">
+                        <span class="invoice-number">فاتورة #${invoice.number}</span>
+                        <span class="invoice-date">${invoice.date}</span>
+                    </div>
+                    <div class="customer-name">العميل: ${invoice.customer}</div>
+                    <div class="customer-name">عدد الأصناف: ${invoice.items.length}</div>
+                `;
+                
+                invoiceElement.addEventListener('click', () => toggleInvoiceSelection(key, invoiceElement));
+                invoiceList.appendChild(invoiceElement);
+            });
+            
+            document.getElementById('invoicesSection').classList.remove('hidden');
+            showMessage(`تم العثور على ${invoices.size} فاتورة`, 'success');
+        }
+        
+        function toggleInvoiceSelection(key, element) {
+            if (selectedInvoices.has(key)) {
+                selectedInvoices.delete(key);
+                element.classList.remove('selected');
+            } else {
+                selectedInvoices.add(key);
+                element.classList.add('selected');
+            }
+        }
+        
+        function generateReport() {
+            if (selectedInvoices.size === 0) {
+                showMessage('يرجى اختيار فاتورة واحدة على الأقل', 'error');
+                return;
+            }
+            
+            const selectedData = [];
+            const invoices = new Map();
+            
+            // Group data by invoice
+            filteredData.forEach(item => {
+                const key = `${item.invoiceNumber}-${item.invoiceDate}`;
+                if (selectedInvoices.has(key)) {
+                    selectedData.push(item);
+                    if (!invoices.has(key)) {
+                        invoices.set(key, {
+                            number: item.invoiceNumber,
+                            date: item.invoiceDate,
+                            customer: item.customerName
+                        });
+                    }
+                }
+            });
+            
+            displayDataTable(selectedData);
+            document.getElementById('resultsSection').classList.remove('hidden');
+        }
+        
+        function displayDataTable(data) {
+            const tbody = document.getElementById('dataTableBody');
+            tbody.innerHTML = '';
+            
+            // Group by item code and name
+            const itemGroups = new Map();
+            
+            data.forEach(item => {
+                const key = `${item.itemCode}-${item.itemName}`;
+                if (!itemGroups.has(key)) {
+                    itemGroups.set(key, {
+                        itemCode: item.itemCode,
+                        itemName: item.itemName,
+                        totalQuantity: 0,
+                        totalReturns: 0,
+                        invoices: []
+                    });
+                }
+                
+                const group = itemGroups.get(key);
+                group.totalQuantity += item.quantity;
+                group.totalReturns += item.returnQuantity;
+                group.invoices.push({
+                    invoiceNumber: item.invoiceNumber,
+                    invoiceDate: item.invoiceDate,
+                    quantity: item.quantity,
+                    returnQuantity: item.returnQuantity
+                });
+            });
+            
+            itemGroups.forEach(group => {
+                const row = tbody.insertRow();
+                const netQuantity = group.totalQuantity - group.totalReturns;
+                
+                // Create invoice details HTML
+                let invoiceDetailsHTML = '<div class="invoice-details">';
+                group.invoices.forEach(inv => {
+                    const netQty = inv.quantity - inv.returnQuantity;
+                    invoiceDetailsHTML += `
+                        <div class="invoice-detail-item">
+                            ف.${inv.invoiceNumber} (${inv.invoiceDate})<br>
+                            كمية: ${inv.quantity} - مرتجع: ${inv.returnQuantity} = صافي: ${netQty}
+                        </div>
+                    `;
+                });
+                invoiceDetailsHTML += '</div>';
+                
+                row.innerHTML = `
+                    <td>${group.itemCode}</td>
+                    <td>${group.itemName}</td>
+                    <td><strong>${group.totalQuantity}</strong></td>
+                    <td><strong>${group.totalReturns}</strong></td>
+                    <td><strong style="color: #4CAF50; font-size: 16px;">${netQuantity}</strong></td>
+                    <td>${invoiceDetailsHTML}</td>
+                `;
+            });
+        }
+        
+        function generateThermalReport() {
+            if (selectedInvoices.size === 0) {
+                showMessage('يرجى اختيار فاتورة واحدة على الأقل', 'error');
+                return;
+            }
+            
+            const selectedData = [];
+            filteredData.forEach(item => {
+                const key = `${item.invoiceNumber}-${item.invoiceDate}`;
+                if (selectedInvoices.has(key)) {
+                    selectedData.push(item);
+                }
+            });
+            
+            // Group by item name and aggregate quantities
+            const itemGroups = new Map();
+            
+            selectedData.forEach(item => {
+                if (!itemGroups.has(item.itemName)) {
+                    itemGroups.set(item.itemName, {
+                        itemName: item.itemName,
+                        totalQuantity: 0,
+                        netQuantity: 0,
+                        invoices: []
+                    });
+                }
+                
+                const group = itemGroups.get(item.itemName);
+                const netQty = item.quantity - item.returnQuantity;
+                
+                group.totalQuantity += item.quantity;
+                group.netQuantity += netQty;
+                group.invoices.push({
+                    invoiceNumber: item.invoiceNumber,
+                    invoiceDate: item.invoiceDate,
+                    quantity: item.quantity,
+                    returnQuantity: item.returnQuantity,
+                    netQuantity: netQty
+                });
+            });
+            
+            generateThermalHTML(itemGroups);
+            document.getElementById('thermalReport').classList.remove('hidden');
+        }
+        
+        function generateThermalHTML(itemGroups) {
+            const thermalReport = document.getElementById('thermalReport');
+            let html = `
+                <div class="thermal-header">
+                    تقرير الأصناف
+                    <br>
+                    ${new Date().toLocaleDateString('ar-SA')}
+                </div>
+            `;
+            
+            let grandTotal = 0;
+            
+            itemGroups.forEach((group, itemName) => {
+                html += `
+                    <div class="thermal-item">
+                        <div class="item-name">${itemName}</div>
+                        <div class="item-total">
+                            الكمية الصافية: ${group.netQuantity}
+                        </div>
+                `;
+                
+                // Always show invoice details (even for single occurrence)
+                group.invoices.forEach(inv => {
+                    if (inv.netQuantity > 0) {
+                        html += `
+                            <div class="invoice-detail">
+                                ف.${inv.invoiceNumber} (${inv.invoiceDate}): ${inv.netQuantity}
+                            </div>
+                        `;
+                    }
+                });
+                
+                html += `</div>`;
+                grandTotal += group.netQuantity;
+            });
+            
+            html += `
+                <div class="total-line">
+                    إجمالي الكمية: ${grandTotal}
+                </div>
+            `;
+            
+            thermalReport.innerHTML = html;
+        }
+        
+        function printThermalReport() {
+            const thermalReport = document.getElementById('thermalReport');
+            if (thermalReport.classList.contains('hidden')) {
+                showMessage('يرجى إنشاء التقرير الحراري أولاً', 'error');
+                return;
+            }
+            
+            window.print();
+        }
+        
+        function clearSearch() {
+            document.getElementById('customerSearch').value = '';
+            document.getElementById('invoicesSection').classList.add('hidden');
+            document.getElementById('resultsSection').classList.add('hidden');
+            document.getElementById('thermalReport').classList.add('hidden');
+            selectedInvoices.clear();
+            filteredData = [];
+        }
+        
+        function showMessage(message, type) {
+            const statusDiv = document.getElementById('statusMessage');
+            statusDiv.innerHTML = `<div class="status-message status-${type}">${message}</div>`;
+            
+            setTimeout(() => {
+                statusDiv.innerHTML = '';
+            }, 5000);
+        }
+    </script>
+</body>
+</html>
