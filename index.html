@@ -18,15 +18,73 @@
             min-height: 100vh;
             padding: 20px;
             color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* نافذة المصادقة */
+        .auth-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        
+        .auth-box {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            width: 350px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        }
+        
+        .auth-box h2 {
+            margin-bottom: 20px;
+            color: #4CAF50;
+        }
+        
+        .auth-input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            text-align: center;
+        }
+        
+        .auth-btn {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        
+        .auth-error {
+            color: #f44336;
+            margin-top: 10px;
+            font-size: 14px;
         }
         
         .container {
             max-width: 1400px;
-            margin: 0 auto;
             background: rgba(255, 255, 255, 0.95);
             border-radius: 15px;
             box-shadow: 0 20px 40px rgba(0,0,0,0.1);
             overflow: hidden;
+            width: 100%;
         }
         
         .header {
@@ -320,6 +378,16 @@
             font-weight: bold;
             text-align: center;
         }
+
+        .current-inventory-box {
+            border: 1px solid #000;
+            min-height: 20mm; /* Adjust height as needed */
+            width: 100%;
+            margin-top: 5mm;
+            padding: 2mm;
+            text-align: left;
+            font-size: 10px;
+        }
         
         .status-message {
             padding: 15px;
@@ -387,13 +455,23 @@
     </style>
 </head>
 <body>
-    <div class="container">
+    <!-- نافذة المصادقة -->
+    <div class="auth-overlay" id="authOverlay">
+        <div class="auth-box">
+            <h2>نظام إدارة الفواتير</h2>
+            <input type="password" class="auth-input" id="passwordInput" placeholder="كلمة المرور">
+            <button class="auth-btn" onclick="checkPassword()">دخول</button>
+            <div class="auth-error hidden" id="authError">كلمة المرور غير صحيحة</div>
+        </div>
+    </div>
+
+    <div class="container hidden" id="appContainer">
         <div class="header">
             <h1>نظام إدارة فواتير المبيعات</h1>
-            <p>رفع وتحليل بيانات الفواتير مع إمكانية الطباعة الحرارية</p>
+            <p>رفع وتحليل بيانات الفواتير مع إمكانية الطباعة حرارية</p>
         </div>
         
-        <div class="upload-section">
+        <div class="upload-section" id="uploadSection">
             <div class="file-upload-container" onclick="document.getElementById('fileInput').click()">
                 <div class="upload-icon">📁</div>
                 <div class="upload-text">اسحب ملف Excel هنا أو انقر للرفع</div>
@@ -446,16 +524,38 @@
     </div>
 
     <script>
+        // كلمة المرور المشفرة باستخدام Base64 (20212022)
+        const ENCRYPTED_PASSWORD = "MjAyMTIwMjI=";
+        
         let excelData = [];
         let selectedInvoices = new Set();
         let filteredData = [];
         
-        // Auto-load InvoiceItem.xlsx on page load
-        window.addEventListener('load', function() {
-            autoLoadExcelFile();
+        // التحقق من كلمة المرور
+        function checkPassword() {
+            const passwordInput = document.getElementById('passwordInput').value;
+            const authError = document.getElementById('authError');
+            
+            // تشفير المدخل ومقارنته بالقيمة المشفرة
+            const encryptedInput = btoa(passwordInput);
+            
+            if (encryptedInput === ENCRYPTED_PASSWORD) {
+                document.getElementById('authOverlay').classList.add('hidden');
+                document.getElementById('appContainer').classList.remove('hidden');
+                autoLoadExcelFile();
+            } else {
+                authError.classList.remove('hidden');
+            }
+        }
+        
+        // السماح بالدخول عند الضغط على Enter في حقل كلمة المرور
+        document.getElementById('passwordInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
         });
         
-        // Auto load Excel file if exists
+        // Auto-load InvoiceItem.xlsx on page load
         async function autoLoadExcelFile() {
             try {
                 const response = await fetch('InvoiceItem.xlsx');
@@ -468,6 +568,7 @@
                     
                     processExcelData(jsonData);
                     showMessage('تم تحميل ملف InvoiceItem.xlsx تلقائياً', 'success');
+                    document.getElementById('uploadSection').classList.add('hidden'); // Hide upload section on successful auto-load
                 }
             } catch (error) {
                 // File doesn't exist or can't be loaded, that's fine
@@ -563,6 +664,7 @@
             
             showMessage(`تم تحميل ${excelData.length} سجل بنجاح!`, 'success');
             document.getElementById('controlsSection').classList.remove('hidden');
+            document.getElementById('uploadSection').classList.add('hidden'); // Hide upload section after manual upload
         }
         
         function searchCustomer() {
@@ -586,6 +688,21 @@
             displayInvoices();
         }
         
+        // تحويل التاريخ من صيغة dd/mm/yyyy إلى كائن تاريخ
+        function parseDate(dateString) {
+            if (!dateString) return new Date(0);
+            
+            const parts = dateString.split('/');
+            if (parts.length === 3) {
+                const day = parseInt(parts[0], 10);
+                const month = parseInt(parts[1], 10) - 1; // الأشهر من 0 إلى 11
+                const year = parseInt(parts[2], 10);
+                return new Date(year, month, day);
+            }
+            
+            return new Date(dateString);
+        }
+        
         function displayInvoices() {
             const invoices = new Map();
             
@@ -601,11 +718,19 @@
                 }
                 invoices.get(key).items.push(item);
             });
+
+            // Convert map to array for sorting
+            const sortedInvoices = Array.from(invoices.values()).sort((a, b) => {
+                const dateA = parseDate(a.date);
+                const dateB = parseDate(b.date);
+                return dateB - dateA; // ترتيب تنازلي (الأحدث أولاً)
+            });
             
             const invoiceList = document.getElementById('invoiceList');
             invoiceList.innerHTML = '';
             
-            invoices.forEach((invoice, key) => {
+            sortedInvoices.forEach((invoice) => {
+                const key = `${invoice.number}-${invoice.date}`;
                 const invoiceElement = document.createElement('div');
                 invoiceElement.className = 'invoice-item';
                 invoiceElement.dataset.key = key;
@@ -705,8 +830,7 @@
                     const netQty = inv.quantity - inv.returnQuantity;
                     invoiceDetailsHTML += `
                         <div class="invoice-detail-item">
-                            ف.${inv.invoiceNumber} (${inv.invoiceDate})<br>
-                            كمية: ${inv.quantity} - مرتجع: ${inv.returnQuantity} = صافي: ${netQty}
+                            ف.${inv.invoiceNumber} (${inv.invoiceDate}): كمية: ${inv.quantity} - مرتجع: ${inv.returnQuantity} = صافي: ${netQty}
                         </div>
                     `;
                 });
@@ -774,7 +898,7 @@
                 <div class="thermal-header">
                     تقرير الأصناف
                     <br>
-                    ${new Date().toLocaleDateString('ar-SA')}
+                    ${new Date().toLocaleDateString('en-US')} <!-- Changed to English for non-Hijri date -->
                 </div>
             `;
             
@@ -807,6 +931,7 @@
             html += `
                 <div class="total-line">
                     إجمالي الكمية: ${grandTotal}
+                    <div class="current-inventory-box">الجرد الحالي:</div>
                 </div>
             `;
             
